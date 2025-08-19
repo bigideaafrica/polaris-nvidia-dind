@@ -68,13 +68,13 @@ RUN mkdir -p /var/run/sshd && \
 
 # PolarisLLM Installation (conditional)
 RUN if [ "$INSTALL_POLARISLLM" = "true" ]; then \
-        echo "Installing PolarisLLM..." && \
-        pip3 install --upgrade pip setuptools wheel && \
-        pip3 install --no-cache-dir --timeout=1000 polarisllm --upgrade && \
-        echo "PolarisLLM core installed, installing PyTorch..." && \
-        pip3 install --no-cache-dir --timeout=1000 torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && \
-        echo "PolarisLLM installed successfully" > /tmp/polarisllm.installed && \
-        polarisllm --version; \
+        echo "=== Installing PolarisLLM ===" && \
+        python3 -m pip install --upgrade pip setuptools wheel && \
+        echo "=== Pip upgraded successfully ===" && \
+        (python3 -m pip install --no-cache-dir --timeout=1000 polarisllm && echo "=== PolarisLLM core installed ===" || echo "=== PolarisLLM installation failed, skipping ===") && \
+        (python3 -m pip install --no-cache-dir --timeout=600 torch torchvision torchaudio && echo "=== PyTorch installed ===" || echo "=== PyTorch installation failed, will use system defaults ===") && \
+        (python3 -c "import polarisllm; print('PolarisLLM import successful')" && echo "PolarisLLM installed successfully" > /tmp/polarisllm.installed || echo "PolarisLLM import failed" > /tmp/polarisllm.failed) && \
+        echo "=== Installation process completed ==="; \
     else \
         echo "PolarisLLM not installed" > /tmp/polarisllm.skipped; \
     fi
