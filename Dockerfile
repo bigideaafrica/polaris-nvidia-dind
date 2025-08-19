@@ -27,7 +27,12 @@ RUN apt-get clean && apt-get update && apt-get dist-upgrade -y && apt-get instal
         wget \
         python3 \
         python3-pip \
-        python3-venv && \
+        python3-venv \
+        python3-dev \
+        build-essential \
+        pkg-config \
+        libffi-dev \
+        libssl-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /var/cache/debconf/* /var/log/* /tmp/* /var/tmp/*
 
 # NVIDIA Container Toolkit and Docker
@@ -63,9 +68,13 @@ RUN mkdir -p /var/run/sshd && \
 
 # PolarisLLM Installation (conditional)
 RUN if [ "$INSTALL_POLARISLLM" = "true" ]; then \
-        pip3 install --no-cache-dir polarisllm --upgrade && \
-        pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
-        echo "PolarisLLM installed successfully" > /tmp/polarisllm.installed; \
+        echo "Installing PolarisLLM..." && \
+        pip3 install --upgrade pip setuptools wheel && \
+        pip3 install --no-cache-dir --timeout=1000 polarisllm --upgrade && \
+        echo "PolarisLLM core installed, installing PyTorch..." && \
+        pip3 install --no-cache-dir --timeout=1000 torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && \
+        echo "PolarisLLM installed successfully" > /tmp/polarisllm.installed && \
+        polarisllm --version; \
     else \
         echo "PolarisLLM not installed" > /tmp/polarisllm.skipped; \
     fi
