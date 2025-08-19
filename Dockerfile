@@ -68,7 +68,7 @@ RUN mkdir -p /var/run/sshd && \
 
 # PolarisLLM Installation (conditional)
 RUN if [ "$INSTALL_POLARISLLM" = "true" ]; then \
-        pip install polarisllm --upgrade; \
+        pip install polarisllm --upgrade --break-system-packages; \
     fi
 
 COPY modprobe entrypoint.sh /usr/local/bin/
