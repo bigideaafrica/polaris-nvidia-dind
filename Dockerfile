@@ -68,15 +68,7 @@ RUN mkdir -p /var/run/sshd && \
 
 # PolarisLLM Installation (conditional)
 RUN if [ "$INSTALL_POLARISLLM" = "true" ]; then \
-        echo "=== Installing PolarisLLM ===" && \
-        python3 -m pip install --upgrade pip setuptools wheel && \
-        echo "=== Pip upgraded successfully ===" && \
-        (python3 -m pip install --no-cache-dir --timeout=1000 polarisllm && echo "=== PolarisLLM core installed ===" || echo "=== PolarisLLM installation failed, skipping ===") && \
-        (python3 -m pip install --no-cache-dir --timeout=600 torch torchvision torchaudio && echo "=== PyTorch installed ===" || echo "=== PyTorch installation failed, will use system defaults ===") && \
-        (python3 -c "import polarisllm; print('PolarisLLM import successful')" && echo "PolarisLLM installed successfully" > /tmp/polarisllm.installed || echo "PolarisLLM import failed" > /tmp/polarisllm.failed) && \
-        echo "=== Installation process completed ==="; \
-    else \
-        echo "PolarisLLM not installed" > /tmp/polarisllm.skipped; \
+        pip install polarisllm --upgrade; \
     fi
 
 COPY modprobe entrypoint.sh /usr/local/bin/
