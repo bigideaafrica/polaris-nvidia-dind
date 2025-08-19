@@ -8,6 +8,7 @@ ARG DISTRIB_RELEASE=24.04
 FROM ${DISTRIB_IMAGE}:${DISTRIB_RELEASE}
 ARG DISTRIB_IMAGE
 ARG DISTRIB_RELEASE
+ARG INSTALL_POLARISLLM=false
 
 LABEL maintainer="https://github.com/ehfd"
 
@@ -23,7 +24,10 @@ RUN apt-get clean && apt-get update && apt-get dist-upgrade -y && apt-get instal
         gnupg \
         software-properties-common \
         supervisor \
-        wget && \
+        wget \
+        python3 \
+        python3-pip \
+        python3-venv && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /var/cache/debconf/* /var/log/* /tmp/* /var/tmp/*
 
 # NVIDIA Container Toolkit and Docker
@@ -56,6 +60,15 @@ RUN mkdir -p /var/run/sshd && \
     sed -i 's/#AuthorizedKeysFile/AuthorizedKeysFile/' /etc/ssh/sshd_config && \
     sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config && \
     echo 'root:nvidia-dind' | chpasswd
+
+# PolarisLLM Installation (conditional)
+RUN if [ "$INSTALL_POLARISLLM" = "true" ]; then \
+        pip3 install --no-cache-dir polarisllm --upgrade && \
+        pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
+        echo "PolarisLLM installed successfully" > /tmp/polarisllm.installed; \
+    else \
+        echo "PolarisLLM not installed" > /tmp/polarisllm.skipped; \
+    fi
 
 COPY modprobe entrypoint.sh /usr/local/bin/
 RUN chmod -f 755 /usr/local/bin/entrypoint.sh /usr/local/bin/modprobe

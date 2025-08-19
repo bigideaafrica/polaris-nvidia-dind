@@ -1,0 +1,77 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: polarisllm-dind
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: polarisllm-dind
+  template:
+    metadata:
+      labels:
+        app: polarisllm-dind
+    spec:
+      hostname: polarisllm-dind
+      containers:
+      - name: polarisllm-dind
+        image: bigideaafrica/polarisllm-dind:latest
+        stdin: true
+        tty: true
+        ports:
+        - containerPort: 22
+          name: ssh
+        - containerPort: 7860
+          name: polarisllm
+        securityContext:
+          privileged: true
+        resources:
+          limits:
+            memory: 64Gi
+            cpu: "16"
+            nvidia.com/gpu: 1
+          requests:
+            memory: 2Gi
+            cpu: 500m
+        volumeMounts:
+        - mountPath: /var/lib/docker
+          name: data
+        env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+      volumes:
+      - name: data
+        # Change to a PersistentVolumeClaim to preserve images and containers, otherwise keep this line to prevent file system error
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: polarisllm-dind-ssh
+spec:
+  selector:
+    app: polarisllm-dind
+  ports:
+  - port: 22
+    targetPort: 22
+    name: ssh
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: polarisllm-dind-api
+spec:
+  selector:
+    app: polarisllm-dind
+  ports:
+  - port: 7860
+    targetPort: 7860
+    name: api
+  type: NodePort

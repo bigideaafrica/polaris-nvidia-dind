@@ -12,10 +12,9 @@ on:
     branches: [ main ]
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: bigideaafrica/nvidia-dind
 jobs:
   build:
-    name: Build and push Ubuntu ${{ matrix.os_version }}
+    name: Build and push ${{ matrix.variant }} Ubuntu ${{ matrix.os_version }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -23,9 +22,33 @@ jobs:
     strategy:
       matrix:
         include:
+        # Base NVIDIA DinD Container
         - os_version: "20.04"
+          variant: "nvidia-dind"
+          image_name: "bigideaafrica/nvidia-dind"
+          install_polarisllm: "false"
         - os_version: "22.04"
+          variant: "nvidia-dind"
+          image_name: "bigideaafrica/nvidia-dind"
+          install_polarisllm: "false"
         - os_version: "24.04"
+          variant: "nvidia-dind"
+          image_name: "bigideaafrica/nvidia-dind"
+          install_polarisllm: "false"
+          latest_tag: true
+        # PolarisLLM DinD Container
+        - os_version: "20.04"
+          variant: "polarisllm-dind"
+          image_name: "bigideaafrica/polarisllm-dind"
+          install_polarisllm: "true"
+        - os_version: "22.04"
+          variant: "polarisllm-dind"
+          image_name: "bigideaafrica/polarisllm-dind"
+          install_polarisllm: "true"
+        - os_version: "24.04"
+          variant: "polarisllm-dind"
+          image_name: "bigideaafrica/polarisllm-dind"
+          install_polarisllm: "true"
           latest_tag: true
     steps:
     - name: Checkout repository
@@ -52,18 +75,19 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        images: ${{ env.REGISTRY }}/${{ matrix.image_name }}
 
-    - name: Build and push Ubuntu ${{ matrix.os_version }} container image
+    - name: Build and push ${{ matrix.variant }} Ubuntu ${{ matrix.os_version }} container image
       uses: docker/build-push-action@v5
       with:
         build-args: |
           DISTRIB_RELEASE=${{ matrix.os_version }}
+          INSTALL_POLARISLLM=${{ matrix.install_polarisllm }}
         context: .
         labels: ${{ steps.meta.outputs.labels }}
         no-cache: true
         push: ${{ github.event_name != 'pull_request' }}
         tags: |
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.os_version }}
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.os_version }}-${{ env.COMMIT_TIME_GIT }}
-          ${{ matrix.latest_tag && format('{0}/{1}:latest', env.REGISTRY, env.IMAGE_NAME) || '' }}
+          ${{ env.REGISTRY }}/${{ matrix.image_name }}:${{ matrix.os_version }}
+          ${{ env.REGISTRY }}/${{ matrix.image_name }}:${{ matrix.os_version }}-${{ env.COMMIT_TIME_GIT }}
+          ${{ matrix.latest_tag && format('{0}/{1}:latest', env.REGISTRY, matrix.image_name) || '' }}
