@@ -68,8 +68,9 @@ RUN mkdir -p /var/run/sshd && \
 
 # PolarisLLM Installation (conditional)
 RUN if [ "$INSTALL_POLARISLLM" = "true" ]; then \
-        python3 -m pip install --user polarisllm --upgrade && \
-        echo 'export PATH=$HOME/.local/bin:$PATH' >> /root/.bashrc; \
+        python3 -m venv /opt/polarisllm && \
+        /opt/polarisllm/bin/pip install polarisllm --upgrade && \
+        ln -sf /opt/polarisllm/bin/polarisllm /usr/local/bin/polarisllm; \
     fi
 
 COPY modprobe entrypoint.sh /usr/local/bin/
